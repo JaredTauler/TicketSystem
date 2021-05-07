@@ -9,7 +9,6 @@
     <style>
         body {
           margin: 0;
-          font-family: Arial, Helvetica, sans-serif;
         }
         .header {
           padding: 16px ;
@@ -17,34 +16,34 @@
           color: #f1f1f1;
         }
         /* Page content */
-        .content {
-          padding: 16px;
-        }
+        /*.content {*/
+        /*  padding: 16px;*/
+        /*}*/
 
         /* The sticky class is added to the header with JS when it reaches its scroll position */
-        .sticky {
-          position: fixed;
-          top: 0;
-          width: 100%
-        }
+        /*.sticky {*/
+        /*  position: fixed;*/
+        /*  top: 0;*/
+        /*  width: 100%*/
+        /*}*/
 
         /* Add some top padding to the page content to prevent sudden quick movement (as the header gets a new position at the top of the page (position:fixed and top:0) */
         .sticky + .content {
           padding-top: 102px;
         }
-        .container {
-          height: 200px;
-          position: relative;
-          border: 3px solid green;
-        }
+        /*.container {*/
+        /*  height: 200px;*/
+        /*  position: relative;*/
+        /*  border: 3px solid green;*/
+        /*}*/
 
-        .vertical-center {
-          margin: 0;
-          position: absolute;
-          top: 50%;
-          -ms-transform: translateY(-50%);
-          transform: translateY(-50%);
-        }
+        /*.vertical-center {*/
+        /*  margin: 0;*/
+        /*  position: absolute;*/
+        /*  top: 50%;*/
+        /*  -ms-transform: translateY(-50%);*/
+        /*  transform: translateY(-50%);*/
+        /*}*/
         .btn {
           background-color: #f4511e;
           border: none;
@@ -58,13 +57,14 @@
         }
 
         .btn:hover {opacity: 1}
-
+        {% block style %}
+        {% endblock %}
 	</style>
 </head>
 
-<h2>Fading Buttons - "Fade in Effect"</h2>
+<!--<h2>Fading Buttons - "Fade in Effect"</h2>-->
 
-<button class="btn">Hover Over Me</button>
+<!--\<button class="btn">Hover Over Me</button>-->
 
 <header>
     <div class="header" id="myHeader">
@@ -72,40 +72,40 @@
     </div>
 </header>
 <body>
-    <div class="container">
-      <div class="vertical-center">
-        <button>Centered Button</button>
-      </div>
-    </div>
-    <div class="square"></div>
+<!--    <div class="container">-->
+<!--      <div class="vertical-center">-->
+<!--        <button>Centered Button</button>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <div class="square"></div>-->
 
 <!--    test scrolling lol-->
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
-    <h1>hi</h1>
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
+<!--    <h1>hi</h1>-->
 
     {% block body %}
     {% endblock %}
