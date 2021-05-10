@@ -1,44 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for
+# Jared Tauler, Max McLaughlin (has done NOTHING because jackson and richard distracted him)
+# 5/5/21
+# 1st version of Ticket System
+
+# pip install mysqlclient, redis, cryptography
+# or you will crash.
+
+from flask import Flask, render_template, request, redirect, url_for, session
+from flask_session.__init__ import Session
+# from flask_sqlalchemy import SQLalchemy
+
 import pandas as pd
 
 # MySQL
 import pymysql
 from sqlalchemy import create_engine
-import cryptography
 
-# Passwords
-import hashlib
 import os
-
-
-# password = 'password123'
-#
-#
-# password_to_check = 'password123' # The password provided by the user to check
-#
-# # Use the exact same setup you used to generate the key, but this time put in the password to check
-# new_key = hashlib.pbkdf2_hmac(
-#     'sha256',
-#     password_to_check.encode('utf-8'), # Convert the password to bytes
-#     salt,
-#     100000
-# )
-#
-# if new_key == key:
-#     print('Password is correct')
-# else:
-#     print('Password is incorrect')
-
-def AccountMake(username, password):
-    salt = os.urandom(32)  # Remember this
-    hashed = hashlib.pbkdf2_hmac(
-        'sha256',  # The hash digest algorithm for HMAC
-        password.encode('utf-8'),  # Convert the password to bytes
-        salt,  # Provide the salt
-        100000  # It is recommended to use at least 100,000 iterations of SHA-256
-    )
-
-    ExecuteDB("INSERT INTO `ticketsystem`.`user` (`username`, `email`, `password`, `salt`) VALUES ('{username}', NULL, '{hashed}', '{salt}');", conn)
+import hashlib
 
 def ConnectionString(USERNAME, PASS, HOST):
     DBstr = "mysql+pymysql://" \
@@ -49,11 +27,46 @@ def ConnectionString(USERNAME, PASS, HOST):
             + HOST
     return DBstr
 
-# Execute to DB
-def ExecuteDB(cmd, conn):
-    with conn.connect() as C: C.execute(cmd)
 
+# Execute to DB
+def ExecuteDB(cmd, engine):
+    print(f"Executing to DB {cmd}")
+    with engine.connect() as connection:
+        curr = connection.execute(cmd)
+        result = curr.fetchall()
+        print(f"Result was {result}")
+        return result
+
+
+# Custom exceptions.
+class TicketSystemError(Exception): pass
+class BadInputError(TicketSystemError): pass
+class DatabaseConflict(TicketSystemError): pass
+
+## Main program
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "211910"
+# print(ConnectionString("jlt", "1234", "localhost"))
+
+# Connect to DB server
+engine = create_engine(ConnectionString("jlt", "1234", "192.168.0.131"))  # pip install mysqlclient
+
+# a = pd.read_sql_table("user", con=DB, schema="ticketsystem")
+# SESSION_TYPE = 'redis'
+# app.config.from_object(__name__)
+# Session(app)
+#
+# @app.route('/set/')
+# def set():
+#     session['key'] = 'value'
+#     return 'ok'
+# #
+# @app.route('/get/')
+# def get():
+#     return session.get('key', 'not set')
+# sess = Session()
+# sess.init_app(app)
+# print(sess)
 
 @app.route('/', methods=["GET", "POST"])
 def Login():
@@ -65,6 +78,24 @@ def Login():
             # getting input with name = lname in HTML form
             last_name = request.form.get("lname")
             print(first_name)
+            # password = 'password123'
+            #
+            #
+            # password_to_check = 'password123' # The password provided by the user to check
+            #
+            # # Use the exact same setup you used to generate the key, but this time put in the password to check
+            # new_key = hashlib.pbkdf2_hmac(
+            #     'sha256',
+            #     password_to_check.encode('utf-8'), # Convert the password to bytes
+            #     salt,
+            #     100000
+            # )
+            #
+            # if new_key == key:
+            #     print('Password is correct')
+            # else:
+            #     print('Password is incorrect')
+            session["user"] = "21"
             return redirect(url_for("Home"))
         elif request.form.get('signup'): return redirect(url_for("Signup"))
 
@@ -73,23 +104,58 @@ def Login():
 
 @app.route("/home")
 def Home():
-    return "home"
+    if "user" in session:
+        return "home"
+    else:
+        return redirect(url_for("Login")) # Redirect back to login if no user.
+
 
 @app.route("/signup", methods=["GET", "POST"])
 def Signup():
-    print("bruh")
     if request.method == "POST":
-        # for i in
-        for i in ["password", "confirmpassword", "username", "email":]
-            request.form.get(i)
+
+        form = {}
+        for i in ["password", "confirmpassword", "username", "email"]:
+            form[i] = request.form.get(i)
+        # try:
+        # TODO Do all checks that don't require connecting to the database in the HTML with scripts.
+        for i in ["password", "username", "email"]:
+            # Check for blank or only space characters
+            if form[i].isspace() or form[i] == "":
+                raise BadInputError(f"Your {i.capitalize()} cannot be blank.")
+            # Check for space characters
+            if form[i].find(" ") != -1:
+                raise BadInputError(f"Your {i.capitalize()} cannot have spaces.")
+
+        # Check password
+        if form["password"] != form["confirmpassword"]:
+            raise BadInputError("Passwords do not match.")
+
+        # Check if username is taken. SQL command will return rows with matching username. (which will never be more than 1)
+        if len(ExecuteDB(f"SELECT * FROM ticketsystem.user WHERE 'usernam   e' LIKE '{form['username']}'", engine)) > 0:
+            raise DatabaseConflict(f"The username {form['username']} is already taken.")
+
+        salt = os.urandom(32)  # Remember this
+        hashed = hashlib.pbkdf2_hmac(
+            'sha256',  # The hash digest algorithm for HMAC
+            form["password"].encode('utf-8'),  # Convert the password to bytes
+            salt,  # Provide the salt
+            100000  # It is recommended to use at least 100,000 iterations of SHA-256
+        )
+        print(len(salt))
+        print(len(hashed))
+
+        ExecuteDB(
+            f"INSERT INTO `ticketsystem`.`user` (`username`, `email`, `password`, `salt`) VALUES \
+            ('{form['username']}', '{form['email']}', '{hashed}', '{salt}');"
+        , engine)
+
+
+        # except Exception as e:
+        #     return str(e)
+
 
     return render_template("signup.html")
-
-print("bruh")
-print(ConnectionString("jlt", "1234", "localhost"))
-conn = create_engine(ConnectionString("jlt", "1234", "localhost"))  # pip install mysqlclient
-
-# a = pd.read_sql_table("user", con=DB, schema="ticketsystem")
 
 if __name__ == '__main__':
     app.run(debug=True)
