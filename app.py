@@ -4,6 +4,7 @@
 
 # pip install mysqlclient, redis, cryptography
 # or you will crash.
+import base64
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_session.__init__ import Session
@@ -17,6 +18,8 @@ from sqlalchemy import create_engine
 
 import os
 import hashlib
+import io
+
 
 def ConnectionString(USERNAME, PASS, HOST):
     DBstr = "mysql+pymysql://" \
@@ -29,10 +32,12 @@ def ConnectionString(USERNAME, PASS, HOST):
 
 
 # Execute to DB
-def ExecuteDB(cmd, engine):
+def ExecuteDB(cmd, engine, returning=False):
     print(f"Executing to DB {cmd}")
     with engine.connect() as connection:
         curr = connection.execute(cmd)
+
+    if returning:
         result = curr.fetchall()
         print(f"Result was {result}")
         return result
@@ -74,10 +79,9 @@ def Login():
     if request.method == "POST":
         if request.form.get('login'):
             # getting input with name = fname in HTML form
-            first_name = request.form.get("fname")
+            username = request.form.get("username")
             # getting input with name = lname in HTML form
-            last_name = request.form.get("lname")
-            print(first_name)
+            password = request.form.get("password")
             # password = 'password123'
             #
             #
@@ -117,42 +121,36 @@ def Signup():
         form = {}
         for i in ["password", "confirmpassword", "username", "email"]:
             form[i] = request.form.get(i)
-        # try:
-        # TODO Do all checks that don't require connecting to the database in the HTML with scripts.
-        for i in ["password", "username", "email"]:
-            # Check for blank or only space characters
-            if form[i].isspace() or form[i] == "":
-                raise BadInputError(f"Your {i.capitalize()} cannot be blank.")
-            # Check for space characters
-            if form[i].find(" ") != -1:
-                raise BadInputError(f"Your {i.capitalize()} cannot have spaces.")
+        try:
+            # TODO Do all checks that don't require connecting to the database in the HTML with scripts.
+            for i in ["password", "username", "email"]:
+                # Check for blank or only space characters
+                if form[i].isspace() or form[i] == "":
+                    raise BadInputError(f"Your {i.capitalize()} cannot be blank.")
+                # Check for space characters
+                if form[i].find(" ") != -1:
+                    raise BadInputError(f"Your {i.capitalize()} cannot have spaces.")
 
-        # Check password
-        if form["password"] != form["confirmpassword"]:
-            raise BadInputError("Passwords do not match.")
+            # Check password
+            if form["password"] != form["confirmpassword"]:
+                raise BadInputError("Passwords do not match.")
 
-        # Check if username is taken. SQL command will return rows with matching username. (which will never be more than 1)
-        if len(ExecuteDB(f"SELECT * FROM ticketsystem.user WHERE 'usernam   e' LIKE '{form['username']}'", engine)) > 0:
-            raise DatabaseConflict(f"The username {form['username']} is already taken.")
+            # Check if username is taken. SQL command will return rows with matching username. (which will never be more than 1)
+            if len(ExecuteDB(f"SELECT * FROM ticketsystem.user WHERE `username` LIKE '{form['username']}'", engine, True)) > 0:
+                raise DatabaseConflict(f"The username {form['username']} is already taken.")
 
-        salt = os.urandom(32)  # Remember this
-        hashed = hashlib.pbkdf2_hmac(
-            'sha256',  # The hash digest algorithm for HMAC
-            form["password"].encode('utf-8'),  # Convert the password to bytes
-            salt,  # Provide the salt
-            100000  # It is recommended to use at least 100,000 iterations of SHA-256
-        )
-        print(len(salt))
-        print(len(hashed))
+            salt = os.urandom(32)  # Remember this
+            hashed = hashlib.pbkdf2_hmac('sha256', form["password"].encode('utf-8'), salt, 100000)
 
-        ExecuteDB(
-            f"INSERT INTO `ticketsystem`.`user` (`username`, `email`, `password`, `salt`) VALUES \
-            ('{form['username']}', '{form['email']}', '{hashed}', '{salt}');"
-        , engine)
+            # Store hashed and salt as hex in the database.
+            ExecuteDB(
+                f"INSERT INTO `ticketsystem`.`user` (`username`, `email`, `password`, `salt`) VALUES \
+                ('{form['username']}', '{form['email']}', '{hashed.hex()}', '{salt.hex()}')"
+            , engine)
 
 
-        # except Exception as e:
-        #     return str(e)
+        except Exception as e:
+            return str(e)
 
 
     return render_template("signup.html")
