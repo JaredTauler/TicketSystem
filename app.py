@@ -4,7 +4,6 @@
 
 # pip install mysqlclient, redis, cryptography
 # or you will crash.
-import base64
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_session.__init__ import Session
@@ -18,8 +17,6 @@ from sqlalchemy import create_engine
 
 import os
 import hashlib
-import io
-
 
 def ConnectionString(USERNAME, PASS, HOST):
     DBstr = "mysql+pymysql://" \
@@ -46,7 +43,7 @@ def ExecuteDB(cmd, engine, returning=False):
 # Custom exceptions.
 class TicketSystemError(Exception): pass
 class BadInputError(TicketSystemError): pass
-class DatabaseConflict(TicketSystemError): pass
+class DatabaseError(TicketSystemError): pass
 
 ## Main program
 app = Flask(__name__)
@@ -54,7 +51,7 @@ app.config["SECRET_KEY"] = "211910"
 # print(ConnectionString("jlt", "1234", "localhost"))
 
 # Connect to DB server
-engine = create_engine(ConnectionString("jlt", "1234", "192.168.0.131"))  # pip install mysqlclient
+engine = create_engine(ConnectionString("jlt", "1234", "localhost"))  # pip install mysqlclient
 
 # a = pd.read_sql_table("user", con=DB, schema="ticketsystem")
 # SESSION_TYPE = 'redis'
@@ -73,43 +70,43 @@ engine = create_engine(ConnectionString("jlt", "1234", "192.168.0.131"))  # pip 
 # sess.init_app(app)
 # print(sess)
 
-@app.route('/', methods=["GET", "POST"])
+@app.route('/login', methods=["GET", "POST"])
 def Login():
     print(request.method)
+    session.clear()
     if request.method == "POST":
         if request.form.get('login'):
-            # getting input with name = fname in HTML form
             username = request.form.get("username")
-            # getting input with name = lname in HTML form
             password = request.form.get("password")
-            # password = 'password123'
-            #
-            #
-            # password_to_check = 'password123' # The password provided by the user to check
-            #
-            # # Use the exact same setup you used to generate the key, but this time put in the password to check
-            # new_key = hashlib.pbkdf2_hmac(
-            #     'sha256',
-            #     password_to_check.encode('utf-8'), # Convert the password to bytes
-            #     salt,
-            #     100000
-            # )
-            #
-            # if new_key == key:
-            #     print('Password is correct')
-            # else:
-            #     print('Password is incorrect')
-            session["user"] = "21"
+            form = {}
+            for i in ["password", "username"]:
+                form[i] = request.form.get(i)
+
+            user = pd.read_sql_query(f"SELECT * FROM `ticketsystem`.`user` WHERE `username` LIKE '{form['username']}'", engine)
+            if user.empty:
+                raise DatabaseError("User not in Database")
+
+            password = bytes.fromhex(user["password"].values[0])
+            salt = bytes.fromhex(user["salt"].values[0])
+
+            hashed = hashlib.pbkdf2_hmac('sha256',form["password"].encode('utf-8'), salt, 100000)
+
+            if hashed != password:
+                return "Bad password!"
+
+            session["user"] = user["username"].values[0]
+            session["email"] = user["email"].values[0]
+            print(session)
             return redirect(url_for("Home"))
         elif request.form.get('signup'): return redirect(url_for("Signup"))
 
     return render_template("login.html")
 
 
-@app.route("/home")
+@app.route("/")
 def Home():
     if "user" in session:
-        return "home"
+        return render_template("home.html")
     else:
         return redirect(url_for("Login")) # Redirect back to login if no user.
 
@@ -136,8 +133,8 @@ def Signup():
                 raise BadInputError("Passwords do not match.")
 
             # Check if username is taken. SQL command will return rows with matching username. (which will never be more than 1)
-            if len(ExecuteDB(f"SELECT * FROM ticketsystem.user WHERE `username` LIKE '{form['username']}'", engine, True)) > 0:
-                raise DatabaseConflict(f"The username {form['username']} is already taken.")
+            if len(ExecuteDB(f"SELECT * FROM `ticketsystem`.`user` WHERE `username` LIKE '{form['username']}'", engine, True)) > 0:
+                raise DatabaseError(f"The username {form['username']} is already taken.")
 
             salt = os.urandom(32)  # Remember this
             hashed = hashlib.pbkdf2_hmac('sha256', form["password"].encode('utf-8'), salt, 100000)
@@ -147,6 +144,8 @@ def Signup():
                 f"INSERT INTO `ticketsystem`.`user` (`username`, `email`, `password`, `salt`) VALUES \
                 ('{form['username']}', '{form['email']}', '{hashed.hex()}', '{salt.hex()}')"
             , engine)
+
+            return redirect(url_for("Signup"))
 
 
         except Exception as e:

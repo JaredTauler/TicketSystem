@@ -12,7 +12,7 @@
         }
         /* Header Code */
         .header {
-          padding: 16px ;
+          padding: 1px ;
           background: #555;
           color: #f1f1f1;
         }
@@ -36,15 +36,15 @@
 
         /* Button Code */
         .btn {
-          background-color: #f4511e;
+          background-color: #306bd2;
           border: none;
           color: white;
           padding: 16px 32px;
           text-align: center;
           font-size: 16px;
           margin: 4px 2px;
-          opacity: 0.6;
-          transition: 0.3s;
+          opacity: .6;
+          transition: 0.2s;
         }
 
         .btn:hover {opacity: 1}
@@ -55,12 +55,18 @@
 </head>
 <header>
     <div class="header" id="myHeader">
-        <h2>JRTI Ticket System</h2>
+        <h2>JRTI Ticket System
+
+        {% if "user" is in session %}
+            <a class="btn" href="{{ url_for('Login')}}">Logout</a>
+        {% endif %}
+        </h2>
     </div>
 </header>
 <body>
     {% block body %}
     {% endblock %}
+
 <script>
     // Button code
     window.onscroll = function() {scroll()}; // function on scroll
@@ -76,6 +82,7 @@
       var popup = document.getElementById("myPopup");
       popup.classList.toggle("show");
     }
+
 </script>
 </body>
 </html>
