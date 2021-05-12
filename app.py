@@ -5,8 +5,9 @@
 # pip install mysqlclient, redis, cryptography
 # or you will crash.
 
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session,
 from flask_session.__init__ import Session
+from flask.socketio import SocketIO, emit
 # from flask_sqlalchemy import SQLalchemy
 
 import pandas as pd
@@ -145,11 +146,10 @@ def Signup():
                 ('{form['username']}', '{form['email']}', '{hashed.hex()}', '{salt.hex()}')"
             , engine)
 
-            return redirect(url_for("Signup"))
+            return redirect(url_for("Login"))
 
-
-        except Exception as e:
-            return str(e)
+        except Exception as E:
+            return render_template("signup.html", error=E)
 
 
     return render_template("signup.html")
