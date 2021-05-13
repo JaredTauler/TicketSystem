@@ -4,7 +4,6 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login</title>
 
     <style>
         body {
@@ -52,6 +51,8 @@
         {% endblock %}
 
 	</style>
+    {% block head %}
+    {% endblock %}
 </head>
 <header>
     <div class="header" id="myHeader">
@@ -64,10 +65,30 @@
     </div>
 </header>
 <body>
+    <noscript>This website REQUIRES Javascript! Use a different browser.</noscript>
     {% block body %}
     {% endblock %}
 
-<script>
+
+    <!-- Imports  -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossOrigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossOrigin="anonymous"></script>
+
+    <!-- Script   -->
+    <script type="text/javascript" charset="utf-8">
+    <!-- Jquery and socketio stuff first   -->
+    $(document).ready(function() {
+        // Connect to the Socket.IO server.
+        var socket = io();
+
+        // Redirect function.
+        socket.on('redirect', function (url) {
+            $(location).attr('href', url);
+        });
+
+        {% block socketio %}{% endblock %}
+    });
+
     // Button code
     window.onscroll = function() {scroll()}; // function on scroll
     var header = document.getElementById("myHeader"); // set header
@@ -82,8 +103,10 @@
       var popup = document.getElementById("myPopup");
       popup.classList.toggle("show");
     }
+    </script>
 
-</script>
+    {% block script %}
+    {% endblock %}
 </body>
 </html>
 

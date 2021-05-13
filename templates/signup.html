@@ -1,23 +1,54 @@
+<!--Jared Tauler 5/13/21-->
+
 {% extends "base.html" %}
-
-<!--{% block style %}-->
-<!--{% endblock %}-->
+{% block head %}
+<title>Signup</title>
+{% endblock %}
 {% block body %}
-    <form action="{{ url_for("Signup")}}" method="POST">
-
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username">
-            <label for="email">Email:</label>
-            <input type="text" id="email" name="email"><br><br>
-            <label for="password">Password:</label>
-            <input type="text" id="password" name="password">
-            <label for="confirmpassword">Confirm Password:</label>
-            <input type="text" id="confirmpassword" name="confirmpassword"><br><br>
     <form>
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username" placeholder="joe21">
+        <label for="email">Email:</label>
+        <input type="text" name="email" id="email" name="email"><br><br>
+        <label for="password">Password:</label>
+        <input type="text" id="password" name="password">
+        <label for="confirmpassword">Confirm Password:</label>
+        <input type="text" id="confirmpassword" name="confirmpassword"><br><br>
+    </form>
+    <form id="submit" method="POST" action='#'>
         <button class="btn" value="signup" name="signup">Signup</button>
     </form>
-    {% if error %}
-        <p> {{ error }} </p>
-    {% endif %}
 
+    <div id="problem"></div>
+{% endblock %}
+
+{% block script %}
+<script>
+    {% block socketio %}
+        // Append problems with submitted user stuff, comes from server
+        socket.on('problem', function(msg) {
+            var div = document.getElementById('problem');
+            while(div.firstChild){
+                div.removeChild(div.firstChild);
+            }
+
+            msg.forEach(Append)
+            function Append(i) {
+                $('#problem').append('<br>' + $('<div/>').text(i).html())
+            }
+        });
+
+        // Send user stuff to server
+        $('form#submit').submit(function(event) {
+            socket.emit('SignupSubmit', {
+                username: $('#username').val(),
+                email: $('#email').val(),
+                password: $('#password').val(),
+                confirmpassword: $('#confirmpassword').val()
+            });
+            return false;
+        });
+    {% endblock %}
+
+</script>
 {% endblock %}
