@@ -3,16 +3,16 @@
     button {text-align: left;}
 {% endblock %}
 {% block body %}
-<form>
+<form id="submit" method="POST" action='#'>
     <label for="username">Username:</label>
     <input type="text" id="username" name="username">
     <label for="password">Password:</label>
     <input type="text" id="password" name="password">
-    <form id="submit" method="POST" action='#'>
-        <button class="btn" value="login" name="login">Login</button>
-    </form>
-    <button class="btn" value="signup" name="signup">Signup</button>
+    <button class="btn" value="login" name="login">Login</button>
 </form>
+{#<form id="signup" method="POST" action='#'>#}
+<a class="btn" href="{{ url_for('Signup')}}">Signup</a>
+{#</form>#}
 {% endblock %}
 
 <script>

@@ -2,13 +2,15 @@
 # 5/5/21
 # 1st version of Ticket System
 
-# pip install mysqlclient, redis, cryptography
-# or you will crash.
+# pip install mysqlclient, redis, cryptography, simple-websocket
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_session.__init__ import Session
 import flask_socketio as io
+from flask_socketio import send, emit
 # from flask_sqlalchemy import SQLalchemy
+
+import eventlet
 
 import pandas as pd
 
@@ -48,8 +50,8 @@ class DatabaseError(TicketSystemError): pass
 
 ## Main program
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "211910"
-socketio = io.SocketIO(app, cors_allowed_origins="*")
+app.config["SECRET_KEY"] = "21"
+socketio = io.SocketIO(app)
 # print(ConnectionString("jlt", "1234", "localhost"))
 
 # Connect to DB server
@@ -74,7 +76,8 @@ engine = create_engine(ConnectionString("jlt", "1234", "localhost"))  # pip inst
 
 @app.route('/login', methods=["GET", "POST"])
 def Login():
-    print(request.method)
+    # print(request.method)
+    print("21")
     session.clear()
     return render_template("login.html")
 
@@ -159,6 +162,5 @@ def SignupSubmit(form):
 
 
 if __name__ == '__main__':
-    # app.run(debug=True)
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False)
 
